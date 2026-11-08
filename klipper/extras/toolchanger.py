@@ -7,6 +7,7 @@
 import ast, bisect, logging
 from unittest.mock import sentinel
 from . import tool_probe_endstop
+from . import tool_x_endstop
 
 STATUS_UNINITALIZED = 'uninitialized'
 STATUS_INITIALIZING = 'initializing'
@@ -196,6 +197,7 @@ class Toolchanger:
                                     self.cmd_ADJUST_Z_AFTER_TOOL_NOZZLE_HOME)
         self.fan_switcher = None
         self.tool_probe_endstop = None
+        self.tool_x_endstop = None
         self.validate_tool_timer = None
 
     def require_fan_switcher(self):
@@ -206,6 +208,17 @@ class Toolchanger:
         if not self.tool_probe_endstop:
             self.tool_probe_endstop = tool_probe_endstop.ToolProbeEndstop(self.config, standalone=False)
         self.tool_probe_endstop.add_probe(self.config, probe)
+
+    def add_x_endstop(self, tool, mcu_endstop):
+        if self.tool_x_endstop is None:
+            raise self.config.error(
+                'Add [tool_x_endstop] before configuring per-tool X endstops')
+        self.tool_x_endstop.add_endstop(tool, mcu_endstop)
+
+    def note_x_endstop_triggered(self, tool, eventtime, is_triggered):
+        if self.tool_x_endstop is not None:
+            self.tool_x_endstop.note_endstop_triggered(
+                tool, eventtime, is_triggered)
 
     def _handle_home_rails_begin(self, homing_state, rails):
         if self.initialize_on == INIT_ON_HOME and self.status == STATUS_UNINITALIZED:
@@ -219,12 +232,18 @@ class Toolchanger:
     def _handle_command_error(self):
         self.status = STATUS_UNINITALIZED
         self.tool_missing_helper.deactivate()
+        if self.tool_x_endstop is not None:
+            self.tool_x_endstop.stop_crash_detection()
+            self.tool_x_endstop.set_active_tool(None)
         self.active_tool = None
         self.gcode_transform.tool = None
 
     def _handle_shutdown(self):
         self.status = STATUS_UNINITALIZED
         self.tool_missing_helper.deactivate_at_time(_FUTURE)
+        if self.tool_x_endstop is not None:
+            self.tool_x_endstop.stop_crash_detection()
+            self.tool_x_endstop.set_active_tool(None)
         self.active_tool = None
         self.gcode_transform.tool = None
 
@@ -604,6 +623,8 @@ class Toolchanger:
         if self.active_tool:
             self.active_tool.deactivate()
         self.active_tool = tool
+        if self.tool_x_endstop is not None:
+            self.tool_x_endstop.set_active_tool(tool)
         if self.tool_probe_endstop:
             probe = tool.probe if tool else None
             self.tool_probe_endstop.set_active_probe(probe)

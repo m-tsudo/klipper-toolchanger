@@ -42,6 +42,19 @@ class Tool:
         if detect_pin_name:
             self.printer.load_object(config, 'buttons').register_buttons([detect_pin_name], self._handle_detect)
             self.detect_state = toolchanger.DETECT_PRESENT
+        x_endstop_pin_name = config.get('x_endstop_pin', None)
+        self.x_endstop = None
+        if x_endstop_pin_name:
+            ppins = self.printer.lookup_object('pins')
+            # The tool-presence switch may be shared with the X endstop.
+            ppins.allow_multi_use_pin(
+                x_endstop_pin_name.replace('^', '').replace('!', ''))
+            pin_params = ppins.lookup_pin(
+                x_endstop_pin_name, can_invert=True, can_pullup=True)
+            self.x_endstop = pin_params['chip'].setup_pin(
+                'endstop', pin_params)
+            self.printer.load_object(config, 'buttons').register_buttons(
+                [x_endstop_pin_name], self._handle_x_endstop)
         self.extruder_stepper_name = self._config_get(config, 'extruder_stepper', None)
         self.extruder = None
         self.heater = None
@@ -114,6 +127,10 @@ class Tool:
         self.detect_state = toolchanger.DETECT_ABSENT if is_triggered else toolchanger.DETECT_PRESENT
         self.toolchanger.note_detect_change(self, eventtime)
 
+    def _handle_x_endstop(self, eventtime, is_triggered):
+        self.toolchanger.note_x_endstop_triggered(
+            self, eventtime, is_triggered)
+
     def get_status(self, eventtime):
         return {**self.params,
                 'name': self.name,
@@ -146,6 +163,8 @@ class Tool:
         self.tool_number = number
         self.main_toolchanger.assign_tool(self, number, prev_number, replace)
         self.register_t_gcode(number)
+        if self.x_endstop is not None:
+            self.toolchanger.add_x_endstop(self, self.x_endstop)
 
     def register_t_gcode(self, number):
         gcode = self.printer.lookup_object('gcode')
