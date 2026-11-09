@@ -604,6 +604,9 @@ class Toolchanger:
         if self.active_tool:
             self.active_tool.deactivate()
         self.active_tool = tool
+        tool_endstop = self.printer.lookup_object('tool_endstop', None)
+        if tool_endstop is not None:
+            tool_endstop.set_active_tool(tool)
         if self.tool_probe_endstop:
             probe = tool.probe if tool else None
             self.tool_probe_endstop.set_active_probe(probe)

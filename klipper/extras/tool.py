@@ -60,6 +60,13 @@ class Tool:
         self.tool_number = config.getint('tool_number', -1, minval=0)
         if self.tool_number >= 0:
             self.assign_tool(self.tool_number)
+        self.endstop_pin_name = config.get('endstop_pin', None)
+        self.mcu_endstop = None
+        if self.endstop_pin_name:
+            tool_endstop = self.printer.load_object(config, 'tool_endstop')
+            self.mcu_endstop = self.printer.lookup_object('pins').setup_pin(
+                'endstop', self.endstop_pin_name)
+            tool_endstop.add_tool(config, self, self.mcu_endstop)
 
         gcode = self.printer.lookup_object('gcode')
         gcode.register_mux_command("ASSIGN_TOOL", "TOOL", self.name,
