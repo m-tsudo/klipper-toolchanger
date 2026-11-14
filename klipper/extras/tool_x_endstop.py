@@ -138,7 +138,8 @@ class ToolXEndstop:
     def cmd_START_TOOL_X_ENDSTOP_CRASH_DETECTION(self, gcmd):
         # Querying endstops flushes the queued print moves before monitoring.
         self.cmd_DETECT_ACTIVE_TOOL_X_ENDSTOP(gcmd)
-        self._require_active_tool(gcmd)
+        # Do not check status.
+        # self._require_active_tool(gcmd)
         expected = gcmd.get_int('T', self.active_tool_number)
         if expected != self.active_tool_number:
             raise gcmd.error(
