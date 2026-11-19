@@ -6,7 +6,7 @@ class ToolEndstop:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.name = config.get_name()
-        self.tool_number = config.getint('tool_number', minval=0)
+        self.tool_number = config.getint('tool', minval=0)
         pin = config.get('pin')
 
         # The same physical pin is observed by the MCU endstop and buttons
@@ -18,11 +18,11 @@ class ToolEndstop:
         buttons = self.printer.load_object(config, 'buttons')
         buttons.register_buttons([pin], self._button_handler)
 
-        self.endstop = self.printer.load_object(config, 'tool_endstop')
-        self.endstop.add_endstop(config, self)
+        self.tool_endstop = self.printer.load_object(config, 'tool_virtual_endstop')
+        self.tool_endstop.add_endstop(config, self)
 
     def _button_handler(self, eventtime, is_triggered):
-        self.endstop.note_endstop_triggered(self, eventtime, is_triggered)
+        self.tool_endstop.note_endstop_triggered(self, eventtime, is_triggered)
 
 
 def load_config_prefix(config):

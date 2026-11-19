@@ -13,11 +13,11 @@ crash_gcode:
     PAUSE
 
 [tool_virtual_endstop T0]
-tool_number: 0
+tool: 0
 pin: ^EBBCan:PA15
 
 [tool_virtual_endstop T1]
-tool_number: 1
+tool: 1
 pin: ^EBBCan2:PA15
 
 [stepper_x]
@@ -28,8 +28,8 @@ Use the same virtual pin for `stepper_y` instead if the physical tool endstop
 is used for Y homing. The virtual pin is intended for the axis that uses this
 physical switch; it is not a pair of independent X and Y switches.
 
-Each `[tool_virtual_endstop ...]` section must have a unique `tool_number`
-matching the `tool_number` in the corresponding `[tool ...]` section. Each
+Each `[tool_virtual_endstop ...]` section must have a unique `tool`
+matching the `tool` in the corresponding `[tool ...]` section. Each
 physical pin is shared by the MCU endstop and buttons subsystem, following the
 same pin-sharing pattern as `tool_probe`.
 
