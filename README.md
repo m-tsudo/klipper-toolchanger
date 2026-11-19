@@ -48,3 +48,4 @@ bash ~/klipper-toolchanger/install.sh
 * [Tool probe](/tool_probe.md) - per tool Z probe.
 * [Rounded path](/rounded_path.md) - rounds the travel path corners for fast non-print moves.
 * [Tools calibrate](/tools_calibrate.md) - support for contact based XYZ offset calibration probes.
+* [Tool virtual endstop](/tool_endstop.md) - per-tool X/Y endstop routing and crash detection.
